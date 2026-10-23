@@ -27,14 +27,6 @@ python unified_db_inventory.py \
   --filename_prefix gcp_db_inventory
 ```
 
-### CLI Arguments
-
-| Argument | Required | Default | Description |
-| :--- | :---: | :---: | :--- |
-| `--config_file` | **Yes** | — | Path to the YAML file defining scanned organizations, folders, or projects. |
-| `--mapping_file` | No | `combined_config.json` | Path to the unified JSON schema template. |
-| `--filename_prefix` | No | `gcp_db_inventory` | Prefix used for naming the timestamped Excel report output. |
-
 ---
 
 ## Output Structure
