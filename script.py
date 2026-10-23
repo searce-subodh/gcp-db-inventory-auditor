@@ -439,10 +439,11 @@ if __name__ == "__main__":
         for cluster in list_alloydb_clusters(alloydb_service, project_id):
             cluster_name = cluster.get("name", "")
             for inst in list_alloydb_instances(alloydb_service, cluster_name):
-                combined = {"project_id": project_id, "cluster": cluster, "instance": inst}
                 row = {"Project ID": project_id}
-                row.update(arrange_data_based_on_json(combined, master_template.get("alloydb", {}).get("cluster_mappings", {})))
-                row.update(arrange_data_based_on_json(combined, master_template.get("alloydb", {}).get("instance_mappings", {})))
+                # Pass cluster directly to cluster_mappings
+                row.update(arrange_data_based_on_json(cluster, master_template.get("alloydb", {}).get("cluster_mappings", {})))
+                # Pass instance directly to instance_mappings
+                row.update(arrange_data_based_on_json(inst, master_template.get("alloydb", {}).get("instance_mappings", {})))
                 outputs["alloydb"].append(row)
 
         # 6. Memcached

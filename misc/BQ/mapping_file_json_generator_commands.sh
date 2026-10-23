@@ -18,6 +18,42 @@ bq --format=prettyjson show --model inventory_demo_dataset.poc_kmeans_model
 
 # COMMAND OUTPUT
 
+
+Command : bq --format=prettyjson show inventory_demo_dataset
+{
+  "access": [
+    {
+      "role": "WRITER",
+      "specialGroup": "projectWriters"
+    },
+    {
+      "role": "OWNER",
+      "specialGroup": "projectOwners"
+    },
+    {
+      "role": "OWNER",
+      "userByEmail": "subodh.sonawane@searce.com"
+    },
+    {
+      "role": "READER",
+      "specialGroup": "projectReaders"
+    }
+  ],
+  "creationTime": "1792614613857",
+  "datasetReference": {
+    "datasetId": "inventory_demo_dataset",
+    "projectId": "playground-poc-510005"
+  },
+  "etag": "IzYi4MJ9dqS+hQbQLItFgQ==",
+  "id": "playground-poc-510005:inventory_demo_dataset",
+  "kind": "bigquery#dataset",
+  "lastModifiedTime": "1792614613857",
+  "location": "US",
+  "maxTimeTravelHours": "168",
+  "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/playground-poc-510005/datasets/inventory_demo_dataset",
+  "type": "DEFAULT"
+}
+
  Command :bq --format=prettyjson ls inventory_demo_dataset
 [
   {

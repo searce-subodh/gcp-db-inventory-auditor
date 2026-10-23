@@ -1,4 +1,11 @@
-subodh_sonawane@cloudshell:~/inventory (playground-poc-510005)$ gcloud alloydb clusters describe dummy-alloy-cluster --region="us-central1"
+0. Command : gcloud alloydb clusters list 
+NAME: projects/playground-poc-510005/locations/us-central1/clusters/dummy-alloy-cluster
+NETWORK: projects/156321610908/global/networks/default
+STATUS: READY
+
+
+
+1. Command : gcloud alloydb clusters describe dummy-alloy-cluster --region="us-central1"
 automatedBackupPolicy:
   backupWindow: 3600s
   enabled: false
@@ -47,11 +54,15 @@ state: READY
 subscriptionType: STANDARD
 uid: 37262ee4-5ad5-4c5d-9bf7-1e4888abb0fc
 updateTime: '2026-10-23T10:57:56.531739326Z'
-subodh_sonawane@cloudshell:~/inventory (playground-poc-510005)$ gcloud alloydb instances list --cluster="dummy-alloy-cluster" --region="us-central1"
+
+2. 
+Command : gcloud alloydb instances list --cluster="dummy-alloy-cluster" --region="us-central1"
 NAME: projects/playground-poc-510005/locations/us-central1/clusters/dummy-alloy-cluster/instances/dummy-alloy-instance
 INSTANCE_TYPE: PRIMARY
 STATUS: READY
-subodh_sonawane@cloudshell:~/inventory (playground-poc-510005)$ gcloud alloydb instances describe dummy-alloy-instance --cluster="dummy-alloy-cluster" --region="us-central1"activationPolicy: ALWAYS
+
+3. 
+Command : gcloud alloydb instances describe dummy-alloy-instance --cluster="dummy-alloy-cluster" --region="us-central1"activationPolicy: ALWAYS
 availabilityType: REGIONAL
 clientConnectionConfig:
   sslConfig:
@@ -95,4 +106,4 @@ uid: 6d345948-42fc-4207-9d70-528fbf11321f
 updateTime: '2026-10-23T11:00:27.911329749Z'
 writableNode:
   zoneId: us-central1-b
-subodh_sonawane@cloudshell:~/inventory (playground-poc-510005)$ 
+

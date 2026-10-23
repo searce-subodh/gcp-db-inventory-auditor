@@ -1,0 +1,19 @@
+{
+  "Project ID": "project_id",
+  "Instance Name": "name",
+  "State": "state",
+  "Engine Version": "engineVersion",
+  "Mode": "mode",
+  "Node Type": "nodeType",
+  "Node Size (GB)": "nodeConfig.sizeGb",
+  "Shard Count": "shardCount",
+  "Replica Count": "replicaCount",
+  "Zone Distribution Mode": "zoneDistributionConfig.mode",
+  "Authorization Mode": "authorizationMode",
+  "Transit Encryption": "transitEncryptionMode",
+  "Persistence Mode": "persistenceConfig.mode",
+  "Automated Backup Mode": "automatedBackupConfig.automatedBackupMode",
+  "Deletion Protection Enabled": "deletionProtectionEnabled",
+  "Create Time": "createTime",
+  "Update Time": "updateTime"
+}

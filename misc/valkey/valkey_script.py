@@ -2,6 +2,7 @@ import json
 import argparse
 import datetime
 import sys
+import subprocess
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
@@ -9,11 +10,12 @@ from googleapiclient import discovery
 from googleapiclient.errors import HttpError
 import google.auth
 
-def get_active_projects(crm_service):
-    """Fetches all active projects accessible by the authenticated credentials."""
-    print("Discovering all active projects...")
+def get_active_projects(crm_service, org_id):
+    """Fetches all active projects under a specific Organization."""
+    print(f"Discovering all active projects under Organization ID: {org_id}...")
     projects = []
-    query = "state:ACTIVE"
+    # Filter by organization ID and active state
+    query = f"parent.id:{org_id} parent.type:organization state:ACTIVE"
     
     try:
         request = crm_service.projects().search(query=query)
@@ -27,29 +29,46 @@ def get_active_projects(crm_service):
         print(f"Error fetching projects: {e}")
         sys.exit(1)
 
-def list_valkey_instances(memorystore_service, project_id):
-    """Lists all Valkey/Memorystore instances in a project across all regions."""
-    instances = []
-    parent = f"projects/{project_id}/locations/-"
-    
+def list_and_describe_valkey_instances(project_id):
+    """Lists instances to get names, then runs 'describe' on each Valkey instance."""
+    detailed_instances = []
     try:
-        request = memorystore_service.projects().locations().instances().list(parent=parent)
-        while request is not None:
-            response = request.execute()
-            if 'instances' in response:
-                instances.extend(response['instances'])
-            request = memorystore_service.projects().locations().instances().list_next(previous_request=request, previous_response=response)
-        return instances
-    except HttpError as e:
-        # Silently skip projects where the Memorystore API is disabled or permissions are missing
-        if e.resp.status in [403, 404]:
-            pass 
-        else:
-            print(f"API Error checking project {project_id}: {e._get_reason()}")
+        # 1. List all instances in the project
+        list_result = subprocess.check_output([
+            "gcloud", "memorystore", "instances", "list",
+            f"--project={project_id}",
+            "--location=-",
+            "--format=json"
+        ], stderr=subprocess.DEVNULL, text=True)
+        
+        instances = json.loads(list_result)
+        
+        for inst in instances:
+            # Only process Valkey engines
+            if "VALKEY" in inst.get("engineVersion", ""):
+                instance_name = inst.get("name").split('/')[-1]
+                # Extract location from the resource name: projects/../locations/{location}/instances/..
+                location = inst.get("name").split('/locations/')[1].split('/')[0]
+                
+                # 2. Run the describe command explicitly for this instance
+                describe_result = subprocess.check_output([
+                    "gcloud", "memorystore", "instances", "describe",
+                    instance_name,
+                    f"--project={project_id}",
+                    f"--location={location}",
+                    "--format=json"
+                ], stderr=subprocess.DEVNULL, text=True)
+                
+                detailed_instances.append(json.loads(describe_result))
+                
+        return detailed_instances
+    except subprocess.CalledProcessError:
         return []
+    except FileNotFoundError:
+        print("Error: 'gcloud' CLI is not installed or not found in system PATH.")
+        sys.exit(1)
 
 def write_to_excel(final_output, file_path):
-    """Writes the parsed dictionary to an Excel file."""
     wb = Workbook()
     ws = wb.create_sheet(title="Valkey Inventory")
     if "Sheet" in wb.sheetnames:
@@ -84,7 +103,6 @@ def write_to_excel(final_output, file_path):
     wb.save(file_path)
 
 def helper_function(data, path):
-    """Traverses the dictionary based on the dot-notation path, handling lists elegantly."""
     keys = path.split('.')
     current = data
     
@@ -102,7 +120,6 @@ def helper_function(data, path):
         else:
             return "N/A"
     
-    # Extract just the short name for GCP resource paths
     if isinstance(current, str) and "projects/" in current and "locations/" in current:
         if path == "name":
             return current.split('/')[-1]
@@ -115,14 +132,12 @@ def get_nested_value(data, path):
     return helper_function(data, path)
 
 def arrange_data_based_on_json_file(instance_data, template_file):
-    """Arranges data based on the JSON mapping file."""
     with open(template_file, 'r') as f:
         template = json.load(f)
 
     final_report = {}
     
     for label, api_config_path in template.items():
-        # Skip Project ID here, it gets injected in the main loop
         if api_config_path == "project_id":
             continue
         final_report[label] = get_nested_value(instance_data, api_config_path)
@@ -133,42 +148,36 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Valkey/Memorystore Inventory Fetching Script")
     parser.add_argument("--filename_prefix", type=str, required=True, help="Prefix for the output Excel filename")
     parser.add_argument("--mapping_file", type=str, required=False, default="valkey_config.json", help="Path to the mapping JSON template")
+    parser.add_argument("--org_id", type=str, required=True, help="Google Cloud Organization ID to scan (e.g., 1234567890)")
     args = parser.parse_args()
-
-
 
     try:
         credentials, default_project = google.auth.default()
         crm_service = discovery.build('cloudresourcemanager', 'v3', credentials=credentials)
-        memorystore_service = discovery.build('memorystore', 'v1', credentials=credentials)
     except Exception as e:
-        print(f"Failed to initialize Google API clients: {e}")
+        print(f"Authentication failed: {e}")
         sys.exit(1)
 
     final_output = []
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     filename = f"{args.filename_prefix}_{timestamp}.xlsx"
 
-    projects = get_active_projects(crm_service)
+    projects = get_active_projects(crm_service, args.org_id)
     print(f"Found {len(projects)} active projects. Scanning for Valkey instances...")
 
     for project_id in projects:
-        instances = list_valkey_instances(memorystore_service, project_id)
-        if instances:
-            # Filter specifically for Valkey engines if needed, though the API returns all Memorystore instances
-            valkey_instances = [inst for inst in instances if "VALKEY" in inst.get("engineVersion", "")]
+        valkey_instances = list_and_describe_valkey_instances(project_id)
+        
+        if valkey_instances:
+            print(f"Found {len(valkey_instances)} Valkey instance(s) in project: {project_id}")
             
-            if valkey_instances:
-                print(f"Found {len(valkey_instances)} Valkey instance(s) in project: {project_id}")
+            for instance in valkey_instances:
+                arranged_data = arrange_data_based_on_json_file(instance, args.mapping_file)
                 
-                for instance in valkey_instances:
-                    arranged_data = arrange_data_based_on_json_file(instance, args.mapping_file)
-                    
-                    # Force inject Project ID at the start of the row
-                    final_row = {"Project ID": project_id}
-                    final_row.update(arranged_data)
-                    
-                    final_output.append(final_row)
+                final_row = {"Project ID": project_id}
+                final_row.update(arranged_data)
+                
+                final_output.append(final_row)
 
     if final_output:
         write_to_excel(final_output, filename)
