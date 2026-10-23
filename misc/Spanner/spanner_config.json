@@ -1,0 +1,14 @@
+{
+  "Instance Full ID": "name",
+  "Display Name": "displayName",
+  "Configuration": "config",
+  "Node Count": "nodeCount",
+  "Processing Units": "processingUnits",
+  "State": "state",
+  "Instance Type": "instanceType",
+  "Edition": "edition",
+  "Default Backup Schedule Type": "defaultBackupScheduleType",
+  "Location": "resourceLocation",
+  "Create Time": "createTime",
+  "Update Time": "updateTime"
+}

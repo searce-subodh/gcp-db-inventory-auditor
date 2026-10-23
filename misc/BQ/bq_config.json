@@ -1,0 +1,14 @@
+{
+  "Project ID": "datasetReference.projectId",
+  "Dataset ID": "datasetReference.datasetId",
+  "Location": "location",
+  "Dataset Type": "type",
+  "Max Time Travel Hours": "maxTimeTravelHours",
+  "Dataset Owners": "_calculated.dataset_owners",
+  "Total Object Count": "_calculated.total_object_count",
+  "Table Count": "_calculated.table_count",
+  "View Count": "_calculated.view_count",
+  "Routine Count": "_calculated.routine_count",
+  "Model Count": "_calculated.model_count",
+  "Dataset Labels": "labels"
+}

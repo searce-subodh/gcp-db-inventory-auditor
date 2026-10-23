@@ -1,0 +1,31 @@
+{
+  "cluster_mappings": {
+    "Cluster Name": "name",
+    "State": "state",
+    "Cluster Type": "clusterType",
+    "Database Version": "databaseVersion",
+    "Network": "networkConfig.network",
+    "Subscription Type": "subscriptionType",
+    "Automated Backup Enabled": "automatedBackupPolicy.enabled",
+    "Continuous Backup Enabled": "continuousBackupConfig.enabled",
+    "Continuous Backup Recovery Window (Days)": "continuousBackupConfig.recoveryWindowDays",
+    "Dataplex Config Enabled": "dataplexConfig.enabled",
+    "Encryption Type": "encryptionInfo.encryptionType",
+    "Cluster Create Time": "createTime"
+  },
+  "instance_mappings": {
+    "Instance Name": "name",
+    "State": "state",
+    "Instance Type": "instanceType",
+    "Availability Type": "availabilityType",
+    "IP Address": "ipAddress",
+    "CPU Count": "machineConfig.cpuCount",
+    "Activation Policy": "activationPolicy",
+    "SSL Mode": "clientConnectionConfig.sslConfig.sslMode",
+    "Query Insights Enabled": "queryInsightsInfo.enabled",
+    "Query Plans Per Minute": "queryInsightsInfo.queryPlansPerMinute",
+    "Maintenance Version": "maintenanceVersionName",
+    "Writable Node Zone": "writableNode.zoneId",
+    "Instance Create Time": "createTime"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "Instance Name": "name",
+  "Tier": "tier",
+  "State": "state",
+  "Redis Version": "redisVersion",
+  "Memory (GB)": "memorySizeGb",
+  "Host IP": "host",
+  "Port": "port",
+  "Location (Region)": "locationId",
+  "Current Zone": "currentLocationId",
+  "Authorized Network": "authorizedNetwork",
+  "Connect Mode": "connectMode",
+  "Auth Enabled": "authEnabled",
+  "Transit Encryption": "transitEncryptionMode",
+  "Read Replicas Mode": "readReplicasMode",
+  "Persistence Mode": "persistenceConfig.persistenceMode",
+  "Persistence IAM Identity": "persistenceIamIdentity",
+  "Maxmemory Policy": "redisConfigs.maxmemory-policy",
+  "Maxmemory GB": "redisConfigs.maxmemory-gb",
+  "Maintenance Version": "maintenanceVersion",
+  "Create Time": "createTime"
+}

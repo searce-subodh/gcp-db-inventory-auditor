@@ -1,0 +1,17 @@
+{
+  "Instance Name": "name",
+  "State": "state",
+  "Memcache Version": "memcacheVersion",
+  "Full Version": "memcacheFullVersion",
+  "Node Count": "nodeCount",
+  "CPU Count (Per Node)": "nodeConfig.cpuCount",
+  "Memory MB (Per Node)": "nodeConfig.memorySizeMb",
+  "Discovery Endpoint": "discoveryEndpoint",
+  "Authorized Network": "authorizedNetwork",
+  "Node Hosts": "memcacheNodes.host",
+  "Node Zones": "memcacheNodes.zone",
+  "Node IDs": "memcacheNodes.nodeId",
+  "Maintenance Version": "effectiveMaintenanceVersion",
+  "Create Time": "createTime",
+  "Update Time": "updateTime"
+}

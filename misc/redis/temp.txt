@@ -1,0 +1,29 @@
+authEnabled: true
+authorizedNetwork: projects/PROJECT_ID/global/networks/VPC_NAME
+availableMaintenanceVersions:
+- '20260916_03_01'
+connectMode: PRIVATE_SERVICE_ACCESS
+createTime: '2026-03-10T05:33:35.131815981Z'
+currentLocationId: REGION
+host: 172.18.210.3
+locationId: REGION
+maintenanceVersion: '20251007_00_00'
+memorySizeGb: 1
+name: projects/PROJECT_ID_2/locations/us-central1/instances/redis_name
+nodes:
+- id: node-0
+  zone: REGION
+persistenceConfig:
+  persistenceMode: DISABLED
+persistenceIamIdentity: serviceAccount_id
+port: 6379
+readReplicasMode: READ_REPLICAS_DISABLED
+redisConfigs:
+  maxmemory-gb: '0.9'
+  maxmemory-policy: allkeys-lru
+redisVersion: REDIS_7_0
+reservedIpRange: <IP_RANGE>
+satisfiesPzi: true
+state: READY
+tier: BASIC
+transitEncryptionMode: DISABLED
