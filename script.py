@@ -334,40 +334,35 @@ def arrange_data_based_on_json(data, template):
 
 
 # ==========================================
-# EXCEL EXPORT
+# EXCEL UTILITY
 # ==========================================
-def write_to_excel(service_outputs, file_path):
-    wb = Workbook()
-    if "Sheet" in wb.sheetnames:
-        del wb["Sheet"]
-
-    for sheet_name, data in service_outputs.items():
-        if not data:
-            continue
-        ws = wb.create_sheet(title=sheet_name)
-        headers_written = False
-        for instance_data in data:
-            headers, values = [], []
-            for key, value in instance_data.items():
-                headers.append(key)
-                if isinstance(value, list):
-                    values.append("\n".join([str(i) for i in value]))
-                elif isinstance(value, dict):
-                    values.append("\n".join([f"{k}: {v}" for k, v in value.items()]))
-                else:
-                    values.append(value)
-                    
-            if not headers_written:
-                ws.append(headers)
-                for cell in ws[1]:
-                    cell.font = Font(bold=True)
-                headers_written = True
-            ws.append(values)
+def add_data_to_sheet(wb, sheet_name, data):
+    """Creates a sheet and writes data to it. If data is empty, it does nothing."""
+    if not data:
+        return
+    
+    ws = wb.create_sheet(title=sheet_name)
+    headers_written = False
+    
+    for instance_data in data:
+        headers, values = [], []
+        for key, value in instance_data.items():
+            headers.append(key)
+            if isinstance(value, list):
+                values.append("\n".join([str(i) for i in value]))
+            elif isinstance(value, dict):
+                values.append("\n".join([f"{k}: {v}" for k, v in value.items()]))
+            else:
+                values.append(value)
+                
+        if not headers_written:
+            ws.append(headers)
+            # Bold the header row
+            for cell in ws[1]:
+                cell.font = Font(bold=True)
+            headers_written = True
             
-    if len(wb.sheetnames) == 0:
-        wb.create_sheet("No Data")
-    wb.save(file_path)
-
+        ws.append(values)
 
 # ==========================================
 # MAIN EXECUTION
@@ -399,66 +394,96 @@ if __name__ == "__main__":
         print(f"[!] Error: Mapping file '{args.mapping_file}' not found.")
         sys.exit(1)
 
-    # Individual sheets mapping
-    outputs = {
-        "redis": [], "cloudsql": [], "bigquery": [], 
-        "spanner": [], "alloydb": [], "memcached": [], "valkey": []
-    }
-
     # Resolve scope from YAML using ancestry pruning
     projects = resolve_target_projects(args.config_file)
 
-    for i, project_id in enumerate(projects, 1):
-        print(f"[{i}/{len(projects)}] Processing Project: {project_id}")
+    # 1. Initialize Workbook
+    wb = Workbook()
+    if "Sheet" in wb.sheetnames:
+        del wb["Sheet"]
 
-        # 1. Redis
-        for inst in list_redis_instances(redis_service, project_id):
-            row = {"Project ID": project_id}
-            row.update(arrange_data_based_on_json(inst, master_template.get("redis", {})))
-            outputs["redis"].append(row)
+    print("\n[*] Starting Service Inventory Extraction...")
 
-        # 2. Cloud SQL
+    # 2. Google Cloud SQL
+    print("  -> Fetching Google Cloud SQL...")
+    cloudsql_data = []
+    for project_id in projects:
         for inst in list_cloudsql_instances(sql_service, project_id):
             row = {"Project ID": project_id}
             row.update(arrange_data_based_on_json(inst, master_template.get("cloudsql", {})))
-            outputs["cloudsql"].append(row)
+            cloudsql_data.append(row)
+    add_data_to_sheet(wb, "CloudSQL", cloudsql_data)
 
-        # 3. BigQuery
-        for ds in get_datasets_for_project(bq_service, project_id):
+    # 3. Memorystore for Redis
+    print("  -> Fetching Memorystore for Redis...")
+    redis_data = []
+    for project_id in projects:
+        for inst in list_redis_instances(redis_service, project_id):
             row = {"Project ID": project_id}
-            row.update(arrange_data_based_on_json(ds, master_template.get("bigquery", {})))
-            outputs["bigquery"].append(row)
+            row.update(arrange_data_based_on_json(inst, master_template.get("redis", {})))
+            redis_data.append(row)
+    add_data_to_sheet(wb, "Redis", redis_data)
 
-        # 4. Spanner
-        for inst in list_spanner_instances(spanner_service, project_id):
+    # 4. Memorystore for Memcached
+    print("  -> Fetching Memorystore for Memcached...")
+    memcached_data = []
+    for project_id in projects:
+        for inst in list_memcached_instances(memcache_service, project_id):
             row = {"Project ID": project_id}
-            row.update(arrange_data_based_on_json(inst, master_template.get("spanner", {})))
-            outputs["spanner"].append(row)
+            row.update(arrange_data_based_on_json(inst, master_template.get("memcached", {})))
+            memcached_data.append(row)
+    add_data_to_sheet(wb, "Memcached", memcached_data)
 
-        # 5. AlloyDB
+    # 5. Memorystore for Valkey
+    print("  -> Fetching Memorystore for Valkey...")
+    valkey_data = []
+    for project_id in projects:
+        for inst in list_valkey_instances(project_id):
+            row = {"Project ID": project_id}
+            row.update(arrange_data_based_on_json(inst, master_template.get("valkey", {})))
+            valkey_data.append(row)
+    add_data_to_sheet(wb, "Valkey", valkey_data)
+
+    # 6. AlloyDB for PostgreSQL
+    print("  -> Fetching AlloyDB for PostgreSQL...")
+    alloydb_data = []
+    for project_id in projects:
         for cluster in list_alloydb_clusters(alloydb_service, project_id):
             cluster_name = cluster.get("name", "")
             for inst in list_alloydb_instances(alloydb_service, cluster_name):
                 row = {"Project ID": project_id}
-                # Pass cluster directly to cluster_mappings
                 row.update(arrange_data_based_on_json(cluster, master_template.get("alloydb", {}).get("cluster_mappings", {})))
-                # Pass instance directly to instance_mappings
                 row.update(arrange_data_based_on_json(inst, master_template.get("alloydb", {}).get("instance_mappings", {})))
-                outputs["alloydb"].append(row)
+                alloydb_data.append(row)
+    add_data_to_sheet(wb, "AlloyDB", alloydb_data)
 
-        # 6. Memcached
-        for inst in list_memcached_instances(memcache_service, project_id):
+    # 7. Cloud Spanner
+    print("  -> Fetching Cloud Spanner...")
+    spanner_data = []
+    for project_id in projects:
+        for inst in list_spanner_instances(spanner_service, project_id):
             row = {"Project ID": project_id}
-            row.update(arrange_data_based_on_json(inst, master_template.get("memcached", {})))
-            outputs["memcached"].append(row)
+            row.update(arrange_data_based_on_json(inst, master_template.get("spanner", {})))
+            spanner_data.append(row)
+    add_data_to_sheet(wb, "Spanner", spanner_data)
 
-        # 7. Valkey
-        for inst in list_valkey_instances(project_id):
+    # 8. BigQuery
+    print("  -> Fetching BigQuery...")
+    bq_data = []
+    for project_id in projects:
+        for ds in get_datasets_for_project(bq_service, project_id):
             row = {"Project ID": project_id}
-            row.update(arrange_data_based_on_json(inst, master_template.get("valkey", {})))
-            outputs["valkey"].append(row)
+            row.update(arrange_data_based_on_json(ds, master_template.get("bigquery", {})))
+            bq_data.append(row)
+    add_data_to_sheet(wb, "BigQuery", bq_data)
 
+    # Handle scenario where absolutely no resources were found across all services
+    if len(wb.sheetnames) == 0:
+        wb.create_sheet("No Data")
+
+    # Save Workbook
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     output_filename = f"{args.filename_prefix}_{timestamp}.xlsx"
-    write_to_excel(outputs, output_filename)
+    wb.save(output_filename)
+    
     print(f"\n[DONE] Finished scanning {len(projects)} project(s). Report written to: {output_filename}")
